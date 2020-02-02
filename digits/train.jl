@@ -1,5 +1,4 @@
 using Plots, Images, CSV
-using LineSearches, Optim
 
 include("nn.jl")
 include("util.jl")
@@ -17,36 +16,12 @@ L2 = 50
 L3 = 10
 λ = 1
 
-ϵ = 0.12
-init_θ = rand(Distributions.Uniform(-ϵ, ϵ), (L1 + 1) * L2 + (L2 + 1) * L3)
-
-# use Optim to find minimum 𝚯
-function f(θ_vec)
-    J(vector_to_array(θ_vec))
-end
-
-function g!(storage, θ_vec)
-    g = array_to_vector(ΔJ(vector_to_array(θ_vec)))
-    for i = 1:length(storage)
-        storage[i] = g[i]
-    end
-end
-
-@time @show result = Optim.optimize(
-    f,
-    g!,
-    init_θ,
-    LBFGS(m=5, alphaguess=LineSearches.InitialHagerZhang(), linesearch=LineSearches.MoreThuente()),
-    # LBFGS(m=20, alphaguess=LineSearches.InitialQuadratic(), linesearch = LineSearches.StrongWolfe()),
-    Optim.Options(iterations = 5, show_trace=true, show_every=1)
-    # ConjugateGradient()
-    # ConjugateGradient(eta=0.1, alphaguess=LineSearches.InitialQuadratic(), linesearch = LineSearches.StrongWolfe())
-)
-𝚯_min = vector_to_array(result.minimizer)
-
 X_test = X[40001:42000, :]
 Y_test = Y[40001:42000]
-y_pred = [transform_bitvec_to_digit(predict(X_test[i, :], 𝚯_min)) for i in 1:length(Y_test)]
+
+nn = BasicNN([L1, L2, L3], λ)
+train!(nn, X_train, Y_train, iterations = 1)
+y_pred = [transform_bitvec_to_digit(predict(nn, X_test[i, :])) for i in 1:size(X_test, 1)]
 @show mean(y_pred .!= d[40001:42000, 1])
 
 # NLopt

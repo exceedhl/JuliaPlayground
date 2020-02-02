@@ -14,7 +14,7 @@ function array_to_vector(arr)
     mapreduce(x -> reshape(x, length(x)), vcat, arr, init = Float64[])
 end
 
-function vector_to_array(v, dims = [(L2, (L1 + 1)), (L3, (L2 + 1))])
+function vector_to_array(v, dims)
     result = []
     i = 1
     for dim in dims
